@@ -122,7 +122,7 @@ Resources:
       Runtime: nodejs12.x
       Environment:
         Variables:
-          TABLE_NAME: !Ref ConnectionTableName
+          CONNECTION_TABLE_NAME: !Ref ConnectionTableName
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref ConnectionTableName
