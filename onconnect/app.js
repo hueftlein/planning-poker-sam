@@ -7,8 +7,10 @@ const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: 
 
 exports.handler = async event => {
   const putParams = {
-    TableName: process.env.CONNECTION_TABLE_NAME,
+    TableName: process.env.TABLE_NAME,
     Item: {
+      PK: `ConnectionId#${event.requestContext.connectionId}`,
+      SK: `Metadata`,
       connectionId: event.requestContext.connectionId
     }
   };
@@ -16,6 +18,7 @@ exports.handler = async event => {
   try {
     await ddb.put(putParams).promise();
   } catch (err) {
+    console.log(err);
     return { statusCode: 500, body: 'Failed to connect: ' + JSON.stringify(err) };
   }
 

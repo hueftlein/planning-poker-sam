@@ -7,9 +7,9 @@ Description: >
   functions needed to demonstrate the Websocket protocol on API Gateway.
 
 Parameters:
-  ConnectionTableName:
+  TableName:
     Type: String
-    Default: 'planning_poker_connections'
+    Default: 'planning_poker'
     Description: (Required) The name of the new DynamoDB to store connection identifiers for each connected clients. Minimum 3 characters
     MinLength: 3
     MaxLength: 50
@@ -98,21 +98,34 @@ Resources:
       Description: Prod Stage
       DeploymentId: !Ref Deployment
       ApiId: !Ref PlanningPokerWebSocket
-  ConnectionsTable:
+  Table:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-      - AttributeName: "connectionId"
-        AttributeType: "S"
+        - AttributeName: "PK"
+          AttributeType: "S"
+        - AttributeName: "SK"
+          AttributeType: "S"
       KeySchema:
-      - AttributeName: "connectionId"
-        KeyType: "HASH"
+        - AttributeName: "PK"
+          KeyType: "HASH"
+        - AttributeName: "SK"
+          KeyType: "RANGE"
+      LocalSecondaryIndexes:
+        - IndexName: SecondaryKey
+          KeySchema: 
+            - AttributeName: "PK"
+              KeyType: "HASH"
+            - AttributeName: "SK"
+              KeyType: "RANGE"
+          Projection: 
+            ProjectionType: KEYS_ONLY
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       SSESpecification:
         SSEEnabled: True
-      TableName: !Ref ConnectionTableName
+      TableName: !Ref TableName
   OnConnectFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -122,10 +135,10 @@ Resources:
       Runtime: nodejs12.x
       Environment:
         Variables:
-          CONNECTION_TABLE_NAME: !Ref ConnectionTableName
+          TABLE_NAME: !Ref TableName
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref ConnectionTableName
+          TableName: !Ref TableName
   OnConnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -143,10 +156,10 @@ Resources:
       Runtime: nodejs12.x
       Environment:
         Variables:
-          CONNECTION_TABLE_NAME: !Ref ConnectionTableName
+          TABLE_NAME: !Ref TableName
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref ConnectionTableName
+          TableName: !Ref TableName
   OnDisconnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -164,10 +177,10 @@ Resources:
       Runtime: nodejs12.x
       Environment:
         Variables:
-          CONNECTION_TABLE_NAME: !Ref ConnectionTableName
+          TABLE_NAME: !Ref TableName
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref ConnectionTableName
+          TableName: !Ref TableName
       - Statement:
         - Effect: Allow
           Action:
@@ -184,9 +197,9 @@ Resources:
       Principal: apigateway.amazonaws.com
 
 Outputs:
-  ConnectionsTableArn:
+  TableArn:
     Description: "Connections table ARN"
-    Value: !GetAtt ConnectionsTable.Arn
+    Value: !GetAtt Table.Arn
 
   OnConnectFunctionArn:
     Description: "OnConnect function ARN"
